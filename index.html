@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <script>
+    let colors = [
+      "#25D366", // WhatsApp Green
+      "#128C7E", // Dark Teal
+      "#075E54", // Dark Green
+      "#4CAF50", // Green
+      "#FF5722", // Deep Orange
+      "#FFC107", // Amber
+      "#FF9800", // Orange
+      "#3F51B5", // Indigo
+      "#2196F3", // Blue
+      "#03A9F4", // Light Blue
+      "#009688", // Teal
+      "#8BC34A", // Light Green
+      "#CDDC39", // Lime
+      "#FFEB3B", // Yellow
+      "#FF5722", // Deep Orange
+      "#E91E63", // Pink
+      "#9C27B0", // Purple
+      "#673AB7", // Deep Purple
+      "#F44336", // Red
+      "#795548"  // Brown
+    ];
+    const color = colors[Math.floor(Math.random() * colors.length)];
+
+    var username = prompt('Please enter your name to start the chat.');
+    if (!username) {
+      username = 'Anonymous';
+    }
+    const socket = new WebSocket('wss://zewb3pssyh.execute-api.eu-central-1.amazonaws.com/production/');
+
+    socket.addEventListener('open', e => {
+      console.log('WebSocket is connected');
+    });
+
+    socket.addEventListener('close', e => {
+      document.getElementById("messageContainer").innerHTML += `<p style="font-family:arial,garamond,serif; color:red;">Connection is closed. Please reload the app to establish a new connection!</p>`;
+      document.getElementById('messageInput').disabled = true;
+      document.getElementById('btn').disabled = true;
+      console.log('WebSocket is closed');
+    });
+
+    socket.addEventListener('error', e => console.error('WebSocket is in error', e));
+
+    socket.addEventListener('message', e => {
+      console.log(e);
+      const data = JSON.parse(e.data);
+      document.getElementById("messageContainer").innerHTML += `<p style="font-family:arial,garamond,serif;"><strong style="color:${data.profileColor};">${data.profileName}:</strong> ${data.userMessage}</p>`;
+    
+    });
+
+    window.ask = function (userMessage, profileName) {
+      const payload = {
+        action: 'message',
+        userMessage,
+        profileName,
+        profileColor: color
+      };
+      socket.send(JSON.stringify(payload));
+    };
+
+    function showMessageInHTML() {
+      let msg = document.getElementById('messageInput').value;
+      if(!msg) {
+        document.getElementById('req').style.display = 'block';
+        return;
+      }
+      document.getElementById('req').style.display = 'none';
+      ask(msg, username);
+
+      document.getElementById("messageContainer").innerHTML += `<p style="font-family:arial,garamond,serif;"><strong style="color:${color};">You:</strong> ${msg}</p>`;
+      document.getElementById('messageInput').value = '';
+    }
+
+    document.addEventListener('DOMContentLoaded', (event) => {
+      document.getElementById('messageInput').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          showMessageInHTML();
+        }
+      });
+    });
+    function myFunction() {
+      return "";
+    }
+  </script>
+</head>
+
+<body onbeforeunload="return myFunction()">
+  <h1>Welcome to WebSocket!</h1>
+  <input type="text" id="messageInput" placeholder="Type a message" autofocus required>
+  <button id="btn" onclick="showMessageInHTML()">Send</button>
+  <p id="req" style="font-family:Arial, Helvetica, sans-serif; font-size: 14px; color: red; display: none; margin-top: 4.2px; margin-left: 2.5px;"> This field is required!</p>
+
+  <div id="messageContainer"></div>
+</body>
+
+</html>
